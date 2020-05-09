@@ -21,10 +21,23 @@ class HourlyEmployee implements EmployeeType {
         this.workDuration = 0;
     }
 
-    public void setWorkDuration(int workDuration){
-        todayDate = todayDate.plusDays(1);
+    HourlyEmployee(int workDuration){
+        this.todayDate = LocalDate.now();
         this.workDuration = workDuration;
     }
+
+    HourlyEmployee(int workDuration, LocalDate date) {
+        this.todayDate = date;
+        this.workDuration = workDuration;
+    }
+
+    public void setWorkDuration(int workDuration){
+        todayDate = LocalDate.now();
+        this.workDuration = workDuration;
+    }
+
+    public LocalDate getTodayDate(){ return this.todayDate; }
+    public int getWorkDuration() { return this.workDuration; }
 
     public double calculateSalary(double rate){
         return workDuration > 8 ? rate*8 + (workDuration-8)*1.5*rate : workDuration*8;
@@ -149,6 +162,35 @@ class DeleteEmployee implements UseCaseOperation {
     }
 }
 
+class PostTimeCard implements UseCaseOperation {
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        System.out.println("Give The Employee Id");
+        int employeeId = in.nextInt();
+
+        try {
+            Statement stmt = con.createStatement();
+            String checkEntrySql = "select * from Employee where empId='" + employeeId + "' and empType='Hourly'";
+            ResultSet rs = stmt.executeQuery(checkEntrySql);
+            if(!rs.next()) {
+                System.out.println("Employee Id " + employeeId + " does not exist in record");
+                return;
+            } else{
+                System.out.println("Enter the work duration today");
+                int workDuration = in.nextInt();
+                HourlyEmployee hourlyEmployee = new HourlyEmployee(workDuration);
+                String todayDate = hourlyEmployee.getTodayDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String sql = "insert into TimeCard(todayDate, workDuration, empId) values ('" + todayDate + "','" + hourlyEmployee.getWorkDuration() + "','" + employeeId + "')";
+                stmt.executeUpdate(sql);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in Posting the Time Card");
+            e.printStackTrace();
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -177,6 +219,7 @@ public class Main {
             System.out.println("Press the type of Operation");
             System.out.println("1. Add an Employee");
             System.out.println("2. Delete an Employee");
+            System.out.println("3. Post a Time Card");
 
             int operationType;
             operationType = in.nextInt();
@@ -184,6 +227,8 @@ public class Main {
                 performDataBaseOperation(new AddEmployee() ,con, in);
             } else if(operationType == 2){
                 performDataBaseOperation(new DeleteEmployee(), con, in);
+            } else if(operationType == 3) {
+                performDataBaseOperation(new PostTimeCard(), con, in);
             }
         }
         catch(Exception e){
