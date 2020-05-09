@@ -94,6 +94,36 @@ class Employee {
 
 }
 
+interface UseCaseOperation {
+    void performOperation(Connection con, Scanner in);
+}
+
+class AddEmployee implements UseCaseOperation {
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        System.out.println("Give the Employee Id");
+        int employeeId = in.nextInt();
+        System.out.println("Give the Employee Name");
+        String employeeName = in.next();
+        System.out.println("Give the Employee Type");
+        String employeeType = in.next();
+        System.out.println("Give the Employee Base Rate");
+        double rate = in.nextDouble();
+
+        Employee e = new Employee(employeeId, employeeName, rate, employeeType);
+
+        try {
+            Statement stmt = con.createStatement();
+            String payRollDate = e.getLastPayRollDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String sql = "insert into Employee(empId, empName, emplastPayRollDate, empSalary, empRate, empType) values ('" + e.getId() + "','" + e.getName() + "','" + payRollDate + "','" + e.getSalary() + "','" + e.getRate() + "','" + e.getType() + "')";
+            stmt.executeUpdate(sql);
+        }catch (SQLException ex){
+            System.out.println("Error in Insertiong");
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -108,15 +138,8 @@ class Employee {
 
 public class Main {
 
-    public static void addEmployee(Connection con, Employee e){
-        try {
-            Statement stmt = con.createStatement();
-            String payRollDate = e.getLastPayRollDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            String sql = "insert into Employee(empId, empName, emplastPayRollDate, empSalary, empRate, empType) values ('" + e.getId() + "','" + e.getName() + "','" + payRollDate + "','" + e.getSalary() + "','" + e.getRate() + "','" + e.getType() + "')";
-            stmt.executeUpdate(sql);
-        }catch (SQLException ex){
-            System.out.println("Error in Insertiong");
-        }
+    public static void performDataBaseOperation(UseCaseOperation e, Connection con, Scanner in){
+        e.performOperation(con, in);
     }
 
     public static void main(String[] args){
@@ -125,7 +148,6 @@ public class Main {
         try{
             Class.forName("com.mysql.jdbc.Driver");
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/PayRollSystem?autoReconnect=true&useSSL=false", "debian-sys-maint", "TsFGpziP0rsLMWE5");
-//            con = DriverManager.getConnection("jdbc:mysql:///PayRollSystem", "root", "manish123");
             System.out.println("Welcome to Flipkart Employee PayRoll System");
             System.out.println("Press the type of Operation");
             System.out.println("1. Add an Employee");
@@ -133,18 +155,7 @@ public class Main {
             int operationType;
             operationType = in.nextInt();
             if(operationType == 1) {
-                System.out.println("Give the Employee Id");
-                int employeeId = in.nextInt();
-                System.out.println("Give the Employee Name");
-                String employeeName = in.next();
-                System.out.println("Give the Employee Type");
-                String employeeType = in.next();
-                System.out.println("Give the Employee Base Rate");
-                double rate = in.nextDouble();
-
-                Employee e = new Employee(employeeId, employeeName, rate, employeeType);
-                addEmployee(con, e);
-//                System.out.println(e.getId() + e.getName() + e.getRate() + e.getSalary() + e.getType());
+                performDataBaseOperation(new AddEmployee() ,con, in);
             }
         }
         catch(Exception e){
