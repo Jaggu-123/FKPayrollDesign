@@ -124,6 +124,31 @@ class AddEmployee implements UseCaseOperation {
     }
 }
 
+class DeleteEmployee implements UseCaseOperation {
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        System.out.println("Give the Employee Id");
+        int employeeId = in.nextInt();
+
+        try{
+            Statement stmt = con.createStatement();
+            String checkEntrySql = "select * from Employee where empId='" + employeeId + "'";
+            ResultSet rs = stmt.executeQuery(checkEntrySql);
+            if(!rs.next()) {
+                System.out.println("Employee Id " + employeeId + " does not exist in record");
+                return;
+            } else {
+                String sql = "delete from Employee where empId='" + employeeId + "'";
+                stmt.executeUpdate(sql);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in Deletion");
+            e.printStackTrace();
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -151,11 +176,14 @@ public class Main {
             System.out.println("Welcome to Flipkart Employee PayRoll System");
             System.out.println("Press the type of Operation");
             System.out.println("1. Add an Employee");
+            System.out.println("2. Delete an Employee");
 
             int operationType;
             operationType = in.nextInt();
             if(operationType == 1) {
                 performDataBaseOperation(new AddEmployee() ,con, in);
+            } else if(operationType == 2){
+                performDataBaseOperation(new DeleteEmployee(), con, in);
             }
         }
         catch(Exception e){
