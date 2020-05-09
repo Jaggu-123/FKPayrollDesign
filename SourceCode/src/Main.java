@@ -8,6 +8,18 @@ import java.io.*;
 //import org.json.simple.JSONArray;
 //import org.json.simple.JSONObject;
 
+interface PayMode {
+    String getPaymentMode();
+}
+
+class PayModePostal implements PayMode {
+
+    @Override
+    public String getPaymentMode() {
+        return "Send PayCheck to Postal Adresses";
+    }
+}
+
 interface EmployeeType {
     double calculateSalary(double rate);
 }
@@ -59,8 +71,9 @@ class Employee {
     private double rate;
     private String type;
     private EmployeeType employeeType;
+    private PayMode employeePayMode;
 
-    Employee(int id, String name, double rate, String type){
+    Employee(int id, String name, double rate, String type, int payMode){
         this.id = id;
         this.name = name;
         this.lastPayRollDate = LocalDate.now();
@@ -73,6 +86,7 @@ class Employee {
         else{
              this.employeeType = new MonthlyEmployee();
         }
+        if(payMode == 1){ employeePayMode = new PayModePostal(); }
     }
 
     public int getId(){ return id; }
@@ -81,6 +95,7 @@ class Employee {
     public double getSalary() { return salary; }
     public double getRate() { return rate; }
     public String getType() { return type; }
+    public PayMode getEmployeePayMode() { return employeePayMode; }
 
     public void setLastPayRollDate(){
         if(type == "Hourly"){
@@ -123,13 +138,16 @@ class AddEmployee implements UseCaseOperation {
         String employeeType = in.next();
         System.out.println("Give the Employee Base Rate");
         double rate = in.nextDouble();
+        System.out.println("Give the Payment Mode");
+        System.out.println("\t1. Postal Address");
+        int payType = in.nextInt();
 
-        Employee e = new Employee(employeeId, employeeName, rate, employeeType);
+        Employee e = new Employee(employeeId, employeeName, rate, employeeType, payType);
 
         try {
             Statement stmt = con.createStatement();
             String payRollDate = e.getLastPayRollDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            String sql = "insert into Employee(empId, empName, emplastPayRollDate, empSalary, empRate, empType) values ('" + e.getId() + "','" + e.getName() + "','" + payRollDate + "','" + e.getSalary() + "','" + e.getRate() + "','" + e.getType() + "')";
+            String sql = "insert into Employee(empId, empName, emplastPayRollDate, empSalary, empRate, empType, empPayMode) values ('" + e.getId() + "','" + e.getName() + "','" + payRollDate + "','" + e.getSalary() + "','" + e.getRate() + "','" + e.getType() + "','" + e.getEmployeePayMode().getPaymentMode() + "')";
             stmt.executeUpdate(sql);
         }catch (SQLException ex){
             System.out.println("Error in Insertiong");
