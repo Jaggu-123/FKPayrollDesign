@@ -20,6 +20,14 @@ class PayModePostal implements PayMode {
     }
 }
 
+class PayModeByPayMaster implements PayMode {
+
+    @Override
+    public String getPaymentMode() {
+        return "PickUp by the PayMaster";
+    }
+}
+
 interface EmployeeType {
     double calculateSalary(double rate);
 }
@@ -87,6 +95,7 @@ class Employee {
              this.employeeType = new MonthlyEmployee();
         }
         if(payMode == 1){ employeePayMode = new PayModePostal(); }
+        else if(payMode == 2){ employeePayMode = new PayModeByPayMaster(); }
     }
 
     public int getId(){ return id; }
@@ -140,6 +149,7 @@ class AddEmployee implements UseCaseOperation {
         double rate = in.nextDouble();
         System.out.println("Give the Payment Mode");
         System.out.println("\t1. Postal Address");
+        System.out.println("\t2. PickUp by the PayMaster");
         int payType = in.nextInt();
 
         Employee e = new Employee(employeeId, employeeName, rate, employeeType, payType);
