@@ -1,0 +1,46 @@
+create table Employee (
+    empId int,
+    empName varchar(255),
+    emplastPayRollDate varchar(255),
+    empSalary float,
+    empRate float,
+    empType varchar(255),
+    empPayMode varchar(255),
+    primary key (empId)
+)
+
+create table TimeCard (
+    timeCardId int AUTO_INCREMENT,
+    todayDate varchar(255),
+    workDuration int,
+    empId int,
+    primary key (timeCardId),
+    foreign key (empId) references Employee(empId)
+)
+
+create table SalesCard (
+    salesCardId int AUTO_INCREMENT,
+    dateOfSale varchar(255),
+    amount float,
+    empId int,
+    primary key (salesCardId),
+    foreign key (empId) references Employee(empId)
+)
+
+create table UnionMember (
+    unionMemberId int AUTO_INCREMENT,
+    empId int,
+    primary key (unionMemberId),
+    foreign key (empId) references Employee(empId)
+)
+
+create table UnionLoan (
+    unionLoanId int AUTO_INCREMENT,
+    dateOfLoan varchar(255),
+    amount float,
+    paidOrNot int,
+    dueType varchar(255),
+    unionMemberId int,
+    primary key (unionLoanId),
+    foreign key (unionMemberId) references UnionMember(unionMemberId)
+)
