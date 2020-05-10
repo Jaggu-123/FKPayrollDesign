@@ -105,23 +105,29 @@ class Employee {
     private double rate;
     private double commissionRate;
     private String type;
-    private EmployeeType employeeType;
     private PayMode employeePayMode;
 
-    Employee(int id, String name, double rate, String type, int payMode){
+    Employee(int id, String name, double rate, int type, int payMode){
         this.id = id;
         this.name = name;
         this.lastPayRollDate = LocalDate.now();
         this.salary = 0;
         this.rate = rate;
-        this.type = type;
+        this.type = (type == 1 ? "Hourly" : "Monthly");
         this.commissionRate = 0.5;
-        if(this.type.equals("Hourly")){
-             this.employeeType = new HourlyEmployee();
-        }
-        else{
-             this.employeeType = new MonthlyEmployee();
-        }
+        if(payMode == 1){ employeePayMode = new PayModePostal(); }
+        else if(payMode == 2){ employeePayMode = new PayModeByPayMaster(); }
+        else if(payMode == 3){ employeePayMode = new PayModeDepositInBank(); }
+    }
+
+    Employee(int id, String name, int payMode){
+        this.id = id;
+        this.name = name;
+        this.lastPayRollDate = LocalDate.now();
+        this.salary = 0;
+        this.rate = 0;
+        this.type = "Temporary";
+        this.commissionRate = 0.5;
         if(payMode == 1){ employeePayMode = new PayModePostal(); }
         else if(payMode == 2){ employeePayMode = new PayModeByPayMaster(); }
         else if(payMode == 3){ employeePayMode = new PayModeDepositInBank(); }
@@ -152,12 +158,6 @@ class Employee {
 
     public void setType(String type){
         this.type = type;
-        if(this.type.equals("Hourly")){
-             this.employeeType = new HourlyEmployee();
-        }
-        else{
-             this.employeeType = new MonthlyEmployee();
-        }
     }
 
 }
@@ -175,16 +175,26 @@ class AddEmployee implements UseCaseOperation {
         System.out.println("Give the Employee Name");
         String employeeName = in.next();
         System.out.println("Give the Employee Type");
-        String employeeType = in.next();
-        System.out.println("Give the Employee Base Rate");
-        double rate = in.nextDouble();
+        System.out.println("\t1. Hourly-Based Employee");
+        System.out.println("\t2. Monthly-Based Employee");
+        System.out.println("\t3. Temporary Employee");
+        int employeeType = in.nextInt();
+        double rate = 0;
+        if (employeeType == 1 || employeeType == 2) {
+            System.out.println("Give the Employee Base Rate");
+            rate = in.nextDouble();
+        }
         System.out.println("Give the Payment Mode");
         System.out.println("\t1. Postal Address");
         System.out.println("\t2. PickUp by the PayMaster");
         System.out.println("\t3. Send the PayChecks to Deposit in Bank");
         int payType = in.nextInt();
 
-        Employee e = new Employee(employeeId, employeeName, rate, employeeType, payType);
+        Employee e = null;
+        if(employeeType == 3)
+            e = new Employee(employeeId, employeeName, payType);
+        else
+            e = new Employee(employeeId, employeeName, rate, employeeType, payType);
 
         try {
             Statement stmt = con.createStatement();
