@@ -429,6 +429,80 @@ class Union implements UseCaseOperation {
     }
 }
 
+class ExecutePayRoll implements UseCaseOperation {
+
+    private ArrayList<Employee> employeeArrayList = new ArrayList<>();
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        try {
+            Statement stmt = con.createStatement();
+//            String sql1 = "select * from Employee";
+//            ResultSet rs = stmt.executeQuery(sql1);
+//            while(rs.next()){
+//                int empId = Integer.parseInt(rs.getString(1));
+//                String empName = rs.getString(2);
+//                double empRate = Double.parseDouble(rs.getString(5));
+//                String empType = rs.getString(6);
+//                int type = 0;
+//                if(empType.equals("Hourly")) type = 1;
+//                else if(empType.equals("Monthly")) type = 2;
+//                else type = 3;
+//                String empPay = rs.getString(7);
+//                int pay = 0;
+//                if(empPay.equals("Send PayCheck to Postal Adresses")) pay = 1;
+//                else if(empPay.equals("PickUp by the PayMaster")) pay = 2;
+//                else pay = 3;
+//                Employee e = new Employee(empId, empName, empRate, type, pay);
+//
+//                employeeArrayList.add(e);
+//            }
+            String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String sql = "select * from TimeCard where todayDate='" + dateToday + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+            if(!rs.next()){
+                System.out.println("No Entry In Record");
+            } else {
+                do{
+                    Statement stmt1 = con.createStatement();
+                    HourlyEmployee hourlyEmployee = new HourlyEmployee(Integer.parseInt(rs.getString(3)));
+                    sql = "select * from Employee where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+                    ResultSet rs1 = stmt1.executeQuery(sql);
+                    if (!rs1.next()) {
+                        System.out.println("Error while Hourly Employee PayRoll");
+                    } else {
+                        double rate = Double.parseDouble(rs1.getString(5));
+                        double salary = Double.parseDouble(rs1.getString(4)) + hourlyEmployee.calculateSalary(rate);
+                        String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+                        stmt1.executeUpdate(sql2);
+                    }
+                } while (rs.next());
+            }
+
+            stmt = con.createStatement();
+            sql = "select * from Employee where empType='Monthly'";
+            rs = stmt.executeQuery(sql);
+            LocalDate date1 = LocalDate.now();
+            while (rs.next()){
+                LocalDate date = LocalDate.parse(rs.getString(3), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                date = date.plusMonths(1);
+
+                if(date.compareTo(date1) == 0){
+                    Statement stmt1 = con.createStatement();
+                    MonthlyEmployee monthlyEmployee = new MonthlyEmployee();
+                    double rate = Double.parseDouble(rs.getString(5));
+                    double salary = Double.parseDouble(rs.getString(4)) + monthlyEmployee.calculateSalary(rate);
+                    String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(1)) + "'";
+                    stmt1.executeUpdate(sql2);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error while PayRoll");
+            e.printStackTrace();
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -460,6 +534,7 @@ public class Main {
             System.out.println("3. Post a Time Card");
             System.out.println("4. Posting a Sales Card");
             System.out.println("5. Union Service Operation");
+            System.out.println("6. Run PayRoll");
 
             int operationType;
             operationType = in.nextInt();
@@ -473,6 +548,8 @@ public class Main {
                 performDataBaseOperation(new PostSalesCard(), con, in);
             } else if(operationType == 5) {
                 performDataBaseOperation(new Union(), con, in);
+            } else if(operationType == 6) {
+                performDataBaseOperation(new ExecutePayRoll(), con, in);
             }
         }
         catch(Exception e){
