@@ -8,6 +8,79 @@ import java.io.*;
 //import org.json.simple.JSONArray;
 //import org.json.simple.JSONObject;
 
+interface UnionInterface {
+    double getAmountUnion();
+}
+
+interface UnionDuesService {
+    String getDueType();
+    int setPaid();
+}
+
+class LoanDue implements UnionDuesService {
+
+    @Override
+    public String getDueType() {
+        return "Loan Amount";
+    }
+
+    @Override
+    public int setPaid() {
+        return 1;
+    }
+}
+
+class MemberShip implements UnionDuesService {
+
+    @Override
+    public String getDueType() {
+        return "Membership Fee";
+    }
+
+    @Override
+    public int setPaid() {
+        return 1;
+    }
+}
+
+class UnionDues implements UnionInterface {
+
+    private double amount;
+    private int paidOrNot;
+    private LocalDate availDate;
+    private UnionDuesService unionDuesService;
+
+    UnionDues(double amount, int dueType){
+        this.amount = amount;
+        this.paidOrNot = 0;
+        this.availDate = LocalDate.now();
+        if(dueType == 1){ unionDuesService = new LoanDue(); }
+    }
+
+    UnionDues(int dueType){
+        unionDuesService = new MemberShip();
+        this.amount = 255;
+        this.availDate = LocalDate.now();
+        this.paidOrNot = 0;
+    }
+
+    @Override
+    public double getAmountUnion() {
+        return amount;
+    }
+
+    public int getPaidOrNot() {
+        return paidOrNot;
+    }
+
+    public void setPaidOrNot(){
+        this.paidOrNot = unionDuesService.setPaid();
+    }
+
+    public UnionDuesService getUnionDuesService(){ return this.unionDuesService; }
+    public LocalDate getAvailDate() {return availDate; }
+}
+
 interface PayMode {
     String getPaymentMode();
 }
@@ -292,6 +365,70 @@ class PostSalesCard implements UseCaseOperation {
     }
 }
 
+class Union implements UseCaseOperation {
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        System.out.println("1. Avail Union Services");
+        System.out.println("2. Take Loan");
+
+        int op = in.nextInt();
+        if(op == 1){
+            System.out.println("Give the employee Id");
+            int employeeId = in.nextInt();
+
+            try {
+                Statement stmt = con.createStatement();
+                String checkEntry = "select * from UnionMember where empId='" + employeeId + "'";
+                ResultSet rs = stmt.executeQuery(checkEntry);
+                if(!rs.next()){
+                    String insertEntry = "insert into UnionMember(empId) values ('" + employeeId + "')";
+                    stmt.executeUpdate(insertEntry);
+                    String sql = "select * from UnionMember where empId='" + employeeId + "'";
+                    rs = stmt.executeQuery(sql);
+                    if(!rs.next()){
+                        System.out.println("No Such Employee Exist");
+                        return;
+                    }
+                    else {
+                        UnionDues unionDues = new UnionDues(2);
+                        String todayDate = unionDues.getAvailDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        String makeDueEntry = "insert into UnionLoan(dateOfLoan, amount, paidOrNot, dueType, unionMemberId) values ('" + todayDate + "','" + unionDues.getAmountUnion() + "','" + unionDues.getPaidOrNot() + "','" + unionDues.getUnionDuesService().getDueType() + "','" + Integer.parseInt(rs.getString(1)) + "')";
+                        stmt.executeUpdate(makeDueEntry);
+                    }
+                } else{
+                    System.out.println("The Employee is already a Union Member");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else if(op == 2){
+            System.out.println("Give the Employee Id");
+            int employeeId = in.nextInt();
+
+            try{
+                Statement stmt = con.createStatement();
+                String checkEntry = "select * from UnionMember where empId='" + employeeId + "'";
+                ResultSet rs = stmt.executeQuery(checkEntry);
+                if(!rs.next()){
+                    System.out.println("Emloyee Id " + employeeId + " is not member of Union");
+                    return;
+                }
+                else{
+                    System.out.println("Enter the Loan Amount");
+                    double amount = in.nextDouble();
+                    UnionDues unionDues = new UnionDues(amount,1);
+                    String todayDate = unionDues.getAvailDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    String makeDueEntry = "insert into UnionLoan(dateOfLoan, amount, paidOrNot, dueType, unionMemberId) values ('" + todayDate + "','" + unionDues.getAmountUnion() + "','" + unionDues.getPaidOrNot() + "','" + unionDues.getUnionDuesService().getDueType() + "','" + Integer.parseInt(rs.getString(1)) + "')";
+                    stmt.executeUpdate(makeDueEntry);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -321,7 +458,8 @@ public class Main {
             System.out.println("1. Add an Employee");
             System.out.println("2. Delete an Employee");
             System.out.println("3. Post a Time Card");
-            System.out.println("4. Postng a Sales Card");
+            System.out.println("4. Posting a Sales Card");
+            System.out.println("5. Union Service Operation");
 
             int operationType;
             operationType = in.nextInt();
@@ -333,6 +471,8 @@ public class Main {
                 performDataBaseOperation(new PostTimeCard(), con, in);
             } else if(operationType == 4) {
                 performDataBaseOperation(new PostSalesCard(), con, in);
+            } else if(operationType == 5) {
+                performDataBaseOperation(new Union(), con, in);
             }
         }
         catch(Exception e){
