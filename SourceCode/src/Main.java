@@ -73,8 +73,9 @@ class UnionDues implements UnionInterface {
         return paidOrNot;
     }
 
-    public void setPaidOrNot(){
-        this.paidOrNot = unionDuesService.setPaid();
+    public void setPaidOrNot(int salary){
+        if(salary > amount)
+            this.paidOrNot = unionDuesService.setPaid();
     }
 
     public UnionDuesService getUnionDuesService(){ return this.unionDuesService; }
@@ -524,6 +525,47 @@ class ExecutePayRoll implements UseCaseOperation {
                     } while (rs.next());
                 }
             }
+
+//            stmt = con.createStatement();
+//            sql = "select * from UnionLoan where paidOrNot=0 and dueType='Loan Amount'";
+//            rs = stmt.executeQuery(sql);
+//            if(!rs.next()){
+//                System.out.println("No Entry In Record");
+//            } else {
+//                do{
+//                    LocalDate date = LocalDate.parse(rs.getString(2), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+//                    date = date.plusMonths(1);
+//
+//                    if(date.compareTo(date1) == 0){
+//                        Statement stmt1 = con.createStatement();
+//                        String sql1 = "select * from UnionMember where unionMemberId='" + Integer.parseInt(rs.getString(6)) + "'";
+//                        ResultSet rs1 = stmt1.executeQuery(sql1);
+//                        if(!rs.next()){
+//
+//                        } else {
+//
+//                        }
+//                        UnionDues unionDues = new UnionDues(Double.parseDouble(rs.getString(3)), 1);
+////                        double rate = Double.parseDouble(rs.getString(5));
+//                        unionDues.setPaidOrNot();
+//                        double salary = Double.parseDouble(rs.getString(4)) - monthlyEmployee.calculateSalary(rate);
+////                        String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(1)) + "'";
+////                        stmt1.executeUpdate(sql2);
+//                    }
+////                    Statement stmt1 = con.createStatement();
+////                    HourlyEmployee hourlyEmployee = new HourlyEmployee(Integer.parseInt(rs.getString(3)));
+////                    sql = "select * from Employee where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+////                    ResultSet rs1 = stmt1.executeQuery(sql);
+////                    if (!rs1.next()) {
+////                        System.out.println("Error while Hourly Employee PayRoll");
+////                    } else {
+////                        double rate = Double.parseDouble(rs1.getString(5));
+////                        double salary = Double.parseDouble(rs1.getString(4)) + hourlyEmployee.calculateSalary(rate);
+////                        String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+////                        stmt1.executeUpdate(sql2);
+////                    }
+//                } while (rs.next());
+//            }
         } catch (SQLException e) {
             System.out.println("Error while PayRoll");
             e.printStackTrace();
