@@ -295,8 +295,21 @@ class DeleteEmployee implements UseCaseOperation {
                 System.out.println("Employee Id " + employeeId + " does not exist in record");
                 return;
             } else {
-                String sql = "delete from TimeCard where empId='" + employeeId + "'";
+                String sql = "delete from SalesCard where empId='" + employeeId + "'";
                 stmt.executeUpdate(sql);
+                Statement stmt1 = con.createStatement();
+                sql = "select * from UnionMember where empId='" + employeeId + "'";
+                ResultSet rs1 = stmt1.executeQuery(sql);
+                if(!rs1.next()){
+                }
+                else{
+                    sql = "delete from UnionLoan where unionMemberId='" + Integer.parseInt(rs1.getString(1)) + "'";
+                    stmt.executeUpdate(sql);
+                    sql = "delete from UnionMember where empId='" + employeeId + "'";
+                    stmt.executeUpdate(sql);
+                }
+                String sql1 = "delete from TimeCard where empId='" + employeeId + "'";
+                stmt.executeUpdate(sql1);
                 String sql2 = "delete from Employee where empId='" + employeeId + "'";
                 stmt.executeUpdate(sql2);
             }
