@@ -166,7 +166,7 @@ class SalesRecord implements EmployeeType {
 
     @Override
     public double calculateSalary(double rate) {
-        return amount*rate;
+        return amount*0.5;
     }
 }
 
@@ -494,6 +494,34 @@ class ExecutePayRoll implements UseCaseOperation {
                     double salary = Double.parseDouble(rs.getString(4)) + monthlyEmployee.calculateSalary(rate);
                     String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(1)) + "'";
                     stmt1.executeUpdate(sql2);
+                }
+            }
+
+            if(date1.getDayOfWeek().toString().equals("FRIDAY")){
+                stmt = con.createStatement();
+                dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                sql = "select * from SalesCard";
+                rs = stmt.executeQuery(sql);
+                if(!rs.next()){
+                    System.out.println("No Entry In Record");
+                } else {
+                    do{
+                        LocalDate date = LocalDate.parse(rs.getString(2), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        if(date1.compareTo(date) <= 7) {
+                            Statement stmt1 = con.createStatement();
+                            SalesRecord salesRecord = new SalesRecord(Double.parseDouble(rs.getString(3)));
+                            sql = "select * from Employee where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+                            ResultSet rs1 = stmt1.executeQuery(sql);
+                            if (!rs1.next()) {
+                                System.out.println("Error while Paying Sales Employee PayRoll");
+                            } else {
+                                double rate = Double.parseDouble(rs1.getString(5));
+                                double salary = Double.parseDouble(rs1.getString(4)) + salesRecord.calculateSalary(rate);
+                                String sql2 = "update Employee set empSalary='" + salary + "'where empId='" + Integer.parseInt(rs.getString(4)) + "'";
+                                stmt1.executeUpdate(sql2);
+                            }
+                        }
+                    } while (rs.next());
                 }
             }
         } catch (SQLException e) {
