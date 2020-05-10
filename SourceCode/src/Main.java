@@ -79,12 +79,31 @@ class MonthlyEmployee implements EmployeeType {
     }
 }
 
+class SalesRecord implements EmployeeType {
+    private double amount;
+    private LocalDate dateOfSales;
+
+    SalesRecord(double amount) {
+        this.amount = amount;
+        this.dateOfSales = LocalDate.now();
+    }
+
+    public LocalDate getDateOfSales(){ return dateOfSales; }
+    public double getAmount() { return amount; }
+
+    @Override
+    public double calculateSalary(double rate) {
+        return amount*rate;
+    }
+}
+
 class Employee {
     private int id;
     private String name;
     private LocalDate lastPayRollDate;
     private double salary;
     private double rate;
+    private double commissionRate;
     private String type;
     private EmployeeType employeeType;
     private PayMode employeePayMode;
@@ -96,6 +115,7 @@ class Employee {
         this.salary = 0;
         this.rate = rate;
         this.type = type;
+        this.commissionRate = 0.5;
         if(this.type.equals("Hourly")){
              this.employeeType = new HourlyEmployee();
         }
@@ -113,6 +133,7 @@ class Employee {
     public double getSalary() { return salary; }
     public double getRate() { return rate; }
     public String getType() { return type; }
+    public double getCommissionRate() { return commissionRate; }
     public PayMode getEmployeePayMode() { return employeePayMode; }
 
     public void setLastPayRollDate(){
@@ -127,6 +148,7 @@ class Employee {
     public void setRate(int rate){
         this.rate = rate;
     }
+    public void setCommissionRate(int rate) { this.commissionRate = rate; }
 
     public void setType(String type){
         this.type = type;
@@ -231,6 +253,35 @@ class PostTimeCard implements UseCaseOperation {
     }
 }
 
+class PostSalesCard implements UseCaseOperation {
+
+    @Override
+    public void performOperation(Connection con, Scanner in) {
+        System.out.println("Give the Employee Id");
+        int employeeId = in.nextInt();
+
+        try {
+            Statement stmt = con.createStatement();
+            String checkEntrySql = "select * from Employee where empId='" + employeeId + "'";
+            ResultSet rs = stmt.executeQuery(checkEntrySql);
+            if(!rs.next()) {
+                System.out.println("Employee Id " + employeeId + " does not exist in record");
+                return;
+            } else {
+                System.out.println("Enter the sales amount");
+                double amount = in.nextDouble();
+                SalesRecord salesRecord = new SalesRecord(amount);
+                String todayDate = salesRecord.getDateOfSales().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String sql = "insert into SalesCard(dateOfSale, amount, empId) values ('" + todayDate + "','" + salesRecord.getAmount() + "','" + employeeId + "')";
+                stmt.executeUpdate(sql);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in Posting Sales Card");
+            e.printStackTrace();
+        }
+    }
+}
+
 //class EmployeeCollection {
 //    private ArrayList<Employee> employeeArrayList;
 //
@@ -260,6 +311,7 @@ public class Main {
             System.out.println("1. Add an Employee");
             System.out.println("2. Delete an Employee");
             System.out.println("3. Post a Time Card");
+            System.out.println("4. Postng a Sales Card");
 
             int operationType;
             operationType = in.nextInt();
@@ -269,6 +321,8 @@ public class Main {
                 performDataBaseOperation(new DeleteEmployee(), con, in);
             } else if(operationType == 3) {
                 performDataBaseOperation(new PostTimeCard(), con, in);
+            } else if(operationType == 4) {
+                performDataBaseOperation(new PostSalesCard(), con, in);
             }
         }
         catch(Exception e){
